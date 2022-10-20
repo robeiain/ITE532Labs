@@ -165,6 +165,11 @@ rtt min/avg/max/mdev = 93.878/93.895/93.928/0.251 ms
 
 This shows that the new container can ping the internet and therefore has a valid and working network configuration.
 
+You can now exit from the interactive container:
+
+```
+root@6dd93d6cdc80:/# exit
+```
 
 # <a name="nat"></a>Step 4: Configure NAT for external connectivity
 
