@@ -23,33 +23,10 @@ ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS
 uhz3opjuii09xl8ern9ip7d5p *   docker2    Ready     Active         Leader           20.10.21
 ```
 
-That last line will show you a list of all the nodes, something like this:
-
+4. The next step is to create a service and list out the services. This creates a single service called `web` that runs the latest nginx:
 ```
-ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
-3cq6idpysa53n6a21nqe0924h    manager3  Ready   Active        Reachable
-64swze471iu5silg83ls0bdip *  manager1  Ready   Active        Leader
-7eljvvg0icxlw20od5f51oq8t    manager2  Ready   Active        Reachable
-8awcmkj3sd9nv1pi77i6mdb1i    worker1   Ready   Active        
-avu80ol573rzepx8ov80ygzxz    worker2   Ready   Active        
-bxn1iivy8w7faeugpep76w50j    worker3   Ready   Active        
-```
-You can also find all your machines by running
-```
-$ docker-machine ls
-NAME       ACTIVE   DRIVER       STATE     URL                         SWARM   DOCKER      ERRORS
-manager1   -        virtualbox   Running   tcp://192.168.99.100:2376           v17.03.0-ce   
-manager2   -        virtualbox   Running   tcp://192.168.99.101:2376           v17.03.0-ce 
-manager3   -        virtualbox   Running   tcp://192.168.99.102:2376           v17.03.0-ce
-worker1    -        virtualbox   Running   tcp://192.168.99.103:2376           v17.03.0-ce
-worker2    -        virtualbox   Running   tcp://192.168.99.104:2376           v17.03.0-ce
-worker3    -        virtualbox   Running   tcp://192.168.99.105:2376           v17.03.0-ce
-```
-
-The next step is to create a service and list out the services. This creates a single service called `web` that runs the latest nginx:
-```
-$ docker-machine ssh manager1 "docker service create -p 80:80 --name web nginx:latest"
-$ docker-machine ssh manager1 "docker service ls"
+$ docker service create -p 80:80 --name web nginx:latest
+$ docker service ls
 ID            NAME  REPLICAS  IMAGE         COMMAND
 2x4jsk6313az  web   1/1       nginx:latest  
 ```
@@ -141,171 +118,137 @@ $ docker-machine ssh manager1 "docker service inspect web"
 
 That's lots of info! Now, let's scale the service:
 ```
-$ docker-machine ssh manager1 "docker service scale web=15"
+$ docker service scale web=15
 web scaled to 15
-$ docker-machine ssh manager1 "docker service ls"
+$ docker service ls
 ID            NAME  REPLICAS  IMAGE         COMMAND
 2x4jsk6313az  web   15/15     nginx:latest  
 ```
 Docker has spread the 15 services evenly over all of the nodes
 ```
-$ docker-machine ssh manager1 "docker service ps web"
-ID                         NAME    IMAGE         NODE      DESIRED STATE  CURRENT STATE           ERROR
-61wjx0zaovwtzywwbomnvjo4q  web.1   nginx:latest  worker3   Running        Running 13 minutes ago  
-bkkujhpbtqab8fyhah06apvca  web.2   nginx:latest  manager1  Running        Running 2 minutes ago   
-09zkslrkgrvbscv0vfqn2j5dw  web.3   nginx:latest  manager1  Running        Running 2 minutes ago   
-4dlmy8k72eoza9t4yp9c9pq0w  web.4   nginx:latest  manager2  Running        Running 2 minutes ago   
-6yqabr8kajx5em2auvfzvi8wi  web.5   nginx:latest  manager3  Running        Running 2 minutes ago   
-21x7sn82883e7oymz57j75q4q  web.6   nginx:latest  manager2  Running        Running 2 minutes ago   
-14555mvu3zee6aek4dwonxz3f  web.7   nginx:latest  worker1   Running        Running 2 minutes ago   
-1q8imt07i564bm90at3r2w198  web.8   nginx:latest  manager1  Running        Running 2 minutes ago   
-encwziari9h78ue32v5pjq9jv  web.9   nginx:latest  worker3   Running        Running 2 minutes ago   
-aivwszsjhhpky43t3x7o8ezz9  web.10  nginx:latest  worker2   Running        Running 2 minutes ago   
-457fsqomatl1lgd9qbz2dcqsb  web.11  nginx:latest  worker1   Running        Running 2 minutes ago   
-7chhofuj4shhqdkwu67512h1b  web.12  nginx:latest  worker2   Running        Running 2 minutes ago   
-7dynic159wyouch05fyiskrd0  web.13  nginx:latest  worker1   Running        Running 2 minutes ago   
-7zg9eki4610maigr1xwrx7zqk  web.14  nginx:latest  manager3  Running        Running 2 minutes ago   
-4z2c9j20gwsasosvj7mkzlyhc  web.15  nginx:latest  manager2  Running        Running 2 minutes ago   
+$ docker service ps web
+ID             NAME      IMAGE          NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+i5x472eny11n   web.1     nginx:latest   docker2   Running         Running 10 minutes ago             
+nyb5yrdp4c72   web.2     nginx:latest   docker1   Running         Running 16 seconds ago             
+qd9mhec8594t   web.3     nginx:latest   docker2   Running         Running 37 seconds ago             
+vbtkh09x9e15   web.4     nginx:latest   docker1   Running         Running 14 seconds ago             
+v9v833kbwpyy   web.5     nginx:latest   docker2   Running         Running 40 seconds ago             
+jmvril7o0sjy   web.6     nginx:latest   docker1   Running         Running 15 seconds ago             
+ya4rjbiqduor   web.7     nginx:latest   docker1   Running         Running 15 seconds ago             
+ycwl952syned   web.8     nginx:latest   docker1   Running         Running 19 seconds ago             
+bmzup7ex4lhd   web.9     nginx:latest   docker2   Running         Running 37 seconds ago             
+qrth6o0c620l   web.10    nginx:latest   docker2   Running         Running 39 seconds ago             
+o9jc3hmwpgw4   web.11    nginx:latest   docker1   Running         Running 14 seconds ago             
+lmdzwk8kg7ih   web.12    nginx:latest   docker2   Running         Running 38 seconds ago             
+f6er19lbhe8e   web.13    nginx:latest   docker1   Running         Running 15 seconds ago             
+pmk8kdifj211   web.14    nginx:latest   docker1   Running         Running 16 seconds ago             
+iuh3bet55ko3   web.15    nginx:latest   docker2   Running         Running 38 seconds ago    
 ```
 
 You can also drain a particular node, that is remove all services from that node. The services will automatically be rescheduled on other nodes.
 ```
-$ docker-machine ssh manager1 "docker node update --availability drain worker1"
-worker1
-$ docker-machine ssh manager1 "docker service ps web"
-ID                         NAME        IMAGE         NODE      DESIRED STATE  CURRENT STATE           ERROR
-61wjx0zaovwtzywwbomnvjo4q  web.1       nginx:latest  worker3   Running        Running 15 minutes ago  
-bkkujhpbtqab8fyhah06apvca  web.2       nginx:latest  manager1  Running        Running 4 minutes ago   
-09zkslrkgrvbscv0vfqn2j5dw  web.3       nginx:latest  manager1  Running        Running 4 minutes ago   
-4dlmy8k72eoza9t4yp9c9pq0w  web.4       nginx:latest  manager2  Running        Running 4 minutes ago   
-6yqabr8kajx5em2auvfzvi8wi  web.5       nginx:latest  manager3  Running        Running 4 minutes ago   
-21x7sn82883e7oymz57j75q4q  web.6       nginx:latest  manager2  Running        Running 4 minutes ago   
-8so0xi55kqimch2jojfdr13qk  web.7       nginx:latest  worker3   Running        Running 3 seconds ago   
-14555mvu3zee6aek4dwonxz3f   \_ web.7   nginx:latest  worker1   Shutdown       Shutdown 4 seconds ago  
-1q8imt07i564bm90at3r2w198  web.8       nginx:latest  manager1  Running        Running 4 minutes ago   
-encwziari9h78ue32v5pjq9jv  web.9       nginx:latest  worker3   Running        Running 4 minutes ago   
-aivwszsjhhpky43t3x7o8ezz9  web.10      nginx:latest  worker2   Running        Running 4 minutes ago   
-738jlmoo6tvrkxxar4gbdogzf  web.11      nginx:latest  worker2   Running        Running 3 seconds ago   
-457fsqomatl1lgd9qbz2dcqsb   \_ web.11  nginx:latest  worker1   Shutdown       Shutdown 3 seconds ago  
-7chhofuj4shhqdkwu67512h1b  web.12      nginx:latest  worker2   Running        Running 4 minutes ago   
-4h7zcsktbku7peh4o32mw4948  web.13      nginx:latest  manager3  Running        Running 3 seconds ago   
-7dynic159wyouch05fyiskrd0   \_ web.13  nginx:latest  worker1   Shutdown       Shutdown 4 seconds ago  
-7zg9eki4610maigr1xwrx7zqk  web.14      nginx:latest  manager3  Running        Running 4 minutes ago   
-4z2c9j20gwsasosvj7mkzlyhc  web.15      nginx:latest  manager2  Running        Running 4 minutes ago   
+$ docker node update --availability drain docker1
+docker1
+$ docker service ps web
+ID             NAME         IMAGE          NODE      DESIRED STATE   CURRENT STATE                    ERROR     PORTS
+i5x472eny11n   web.1        nginx:latest   docker2   Running         Running 11 minutes ago                     
+mzom8b3qk1jh   web.2        nginx:latest   docker2   Running         Running 1 second ago                       
+nyb5yrdp4c72    \_ web.2    nginx:latest   docker1   Shutdown        Shutdown 13 seconds ago                    
+qd9mhec8594t   web.3        nginx:latest   docker2   Running         Running about a minute ago                 
+i6zw74qmdbiq   web.4        nginx:latest   docker2   Running         Running 4 seconds ago                      
+vbtkh09x9e15    \_ web.4    nginx:latest   docker1   Shutdown        Shutdown 14 seconds ago                    
+v9v833kbwpyy   web.5        nginx:latest   docker2   Running         Running about a minute ago                 
+zomt10exdaiw   web.6        nginx:latest   docker2   Running         Running 1 second ago                       
+jmvril7o0sjy    \_ web.6    nginx:latest   docker1   Shutdown        Shutdown 13 seconds ago                    
+ymx02b2ba72z   web.7        nginx:latest   docker2   Running         Running less than a second ago             
+ya4rjbiqduor    \_ web.7    nginx:latest   docker1   Shutdown        Shutdown 13 seconds ago                    
+642vjmyrdqm5   web.8        nginx:latest   docker2   Running         Running less than a second ago             
+ycwl952syned    \_ web.8    nginx:latest   docker1   Shutdown        Shutdown 12 seconds ago                    
+bmzup7ex4lhd   web.9        nginx:latest   docker2   Running         Running about a minute ago                 
+qrth6o0c620l   web.10       nginx:latest   docker2   Running         Running about a minute ago                 
+awz9m9og5mck   web.11       nginx:latest   docker2   Running         Running less than a second ago             
+o9jc3hmwpgw4    \_ web.11   nginx:latest   docker1   Shutdown        Shutdown 13 seconds ago                    
+lmdzwk8kg7ih   web.12       nginx:latest   docker2   Running         Running about a minute ago                 
+yocsjxorx40t   web.13       nginx:latest   docker2   Running         Running 2 seconds ago                      
+f6er19lbhe8e    \_ web.13   nginx:latest   docker1   Shutdown        Shutdown 13 seconds ago                    
+gofssv1kxqj7   web.14       nginx:latest   docker2   Running         Running 2 seconds ago                      
+pmk8kdifj211    \_ web.14   nginx:latest   docker1   Shutdown        Shutdown 14 seconds ago                    
+iuh3bet55ko3   web.15       nginx:latest   docker2   Running         Running about a minute ago
 ```
 
-You can check out the nodes and see that `worker1` is still active but drained.
+You can check out the nodes and see that `docker1` is still active but drained.
 ```
-$ docker-machine ssh manager1 "docker node ls"
-ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
-3cq6idpysa53n6a21nqe0924h    manager3  Ready   Active        Reachable
-64swze471iu5silg83ls0bdip *  manager1  Ready   Active        Leader
-7eljvvg0icxlw20od5f51oq8t    manager2  Ready   Active        Reachable
-8awcmkj3sd9nv1pi77i6mdb1i    worker1   Ready   Drain         
-avu80ol573rzepx8ov80ygzxz    worker2   Ready   Active        
-bxn1iivy8w7faeugpep76w50j    worker3   Ready   Active
+$ docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+89hm11snya6gducfwadhoqn2h     docker1    Ready     Drain                           20.10.21
+uhz3opjuii09xl8ern9ip7d5p *   docker2    Ready     Active         Leader           20.10.21
+
 ```
 
 You can also scale down the service
 ```
-$ docker-machine ssh manager1 "docker service scale web=10"
+$ docker service scale web=10
 web scaled to 10
-$ docker-machine ssh manager1 "docker service ps web"
-ID                         NAME        IMAGE         NODE      DESIRED STATE  CURRENT STATE            ERROR
-61wjx0zaovwtzywwbomnvjo4q  web.1       nginx:latest  worker3   Running        Running 22 minutes ago   
-bkkujhpbtqab8fyhah06apvca  web.2       nginx:latest  manager1  Shutdown       Shutdown 54 seconds ago  
-09zkslrkgrvbscv0vfqn2j5dw  web.3       nginx:latest  manager1  Running        Running 11 minutes ago   
-4dlmy8k72eoza9t4yp9c9pq0w  web.4       nginx:latest  manager2  Running        Running 11 minutes ago   
-6yqabr8kajx5em2auvfzvi8wi  web.5       nginx:latest  manager3  Running        Running 11 minutes ago   
-21x7sn82883e7oymz57j75q4q  web.6       nginx:latest  manager2  Running        Running 11 minutes ago   
-8so0xi55kqimch2jojfdr13qk  web.7       nginx:latest  worker3   Running        Running 7 minutes ago    
-14555mvu3zee6aek4dwonxz3f   \_ web.7   nginx:latest  worker1   Shutdown       Shutdown 7 minutes ago   
-1q8imt07i564bm90at3r2w198  web.8       nginx:latest  manager1  Running        Running 11 minutes ago   
-encwziari9h78ue32v5pjq9jv  web.9       nginx:latest  worker3   Shutdown       Shutdown 54 seconds ago  
-aivwszsjhhpky43t3x7o8ezz9  web.10      nginx:latest  worker2   Shutdown       Shutdown 54 seconds ago  
-738jlmoo6tvrkxxar4gbdogzf  web.11      nginx:latest  worker2   Running        Running 7 minutes ago    
-457fsqomatl1lgd9qbz2dcqsb   \_ web.11  nginx:latest  worker1   Shutdown       Shutdown 7 minutes ago   
-7chhofuj4shhqdkwu67512h1b  web.12      nginx:latest  worker2   Running        Running 11 minutes ago   
-4h7zcsktbku7peh4o32mw4948  web.13      nginx:latest  manager3  Running        Running 7 minutes ago    
-7dynic159wyouch05fyiskrd0   \_ web.13  nginx:latest  worker1   Shutdown       Shutdown 7 minutes ago   
-7zg9eki4610maigr1xwrx7zqk  web.14      nginx:latest  manager3  Shutdown       Shutdown 54 seconds ago  
-4z2c9j20gwsasosvj7mkzlyhc  web.15      nginx:latest  manager2  Shutdown       Shutdown 54 seconds ago  
+$ docker service ps web
+ID             NAME        IMAGE          NODE      DESIRED STATE   CURRENT STATE                ERROR     PORTS
+i5x472eny11n   web.1       nginx:latest   docker2   Running         Running 13 minutes ago                 
+mzom8b3qk1jh   web.2       nginx:latest   docker2   Running         Running about a minute ago             
+nyb5yrdp4c72    \_ web.2   nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+qd9mhec8594t   web.3       nginx:latest   docker2   Running         Running 3 minutes ago                  
+i6zw74qmdbiq   web.4       nginx:latest   docker2   Running         Running about a minute ago             
+vbtkh09x9e15    \_ web.4   nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+v9v833kbwpyy   web.5       nginx:latest   docker2   Running         Running 3 minutes ago                  
+zomt10exdaiw   web.6       nginx:latest   docker2   Running         Running about a minute ago             
+jmvril7o0sjy    \_ web.6   nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+ymx02b2ba72z   web.7       nginx:latest   docker2   Running         Running about a minute ago             
+ya4rjbiqduor    \_ web.7   nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+642vjmyrdqm5   web.8       nginx:latest   docker2   Running         Running about a minute ago             
+ycwl952syned    \_ web.8   nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+bmzup7ex4lhd   web.9       nginx:latest   docker2   Running         Running 3 minutes ago                  
+qrth6o0c620l   web.10      nginx:latest   docker2   Running         Running 3 minutes ago                  
+o9jc3hmwpgw4   web.11      nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+f6er19lbhe8e   web.13      nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago                 
+pmk8kdifj211   web.14      nginx:latest   docker1   Shutdown        Shutdown 2 minutes ago   
 ```
 
-Now bring `worker1` back online and show it's new availability
+Now bring `docker1` back online and show it's new availability
 ```
-$ docker-machine ssh manager1 "docker node update --availability active worker1"
-worker1
-$ docker-machine ssh manager1 "docker node inspect worker1 --pretty"
-ID:			8awcmkj3sd9nv1pi77i6mdb1i
-Hostname:		worker1
-Joined at:		2016-08-23 22:30:15.556517377 +0000 utc
+$ docker node update --availability active docker1
+docker1
+$ docker node inspect docker1 --pretty
+ID:			89hm11snya6gducfwadhoqn2h
+Hostname:              	docker1
+Joined at:             	2022-12-21 11:13:50.199877539 +0000 utc
 Status:
  State:			Ready
- Availability:		Active
+ Availability:         	Active
+ Address:		10.0.0.37
 Platform:
  Operating System:	linux
  Architecture:		x86_64
 Resources:
- CPUs:			1
- Memory:		995.9 MiB
+ CPUs:			2
+ Memory:		964.2MiB
 Plugins:
-  Network:		bridge, host, null, overlay
-  Volume:		local
-Engine Version:		17.03.0-ce
-Engine Labels:
- - provider = virtualbox
- ```
+ Log:		awslogs, fluentd, gcplogs, gelf, journald, json-file, local, logentries, splunk, syslog
+ Network:		bridge, host, ipvlan, macvlan, null, overlay
+ Volume:		local
+Engine Version:		20.10.21
+TLS Info:
+ TrustRoot:
+-----BEGIN CERTIFICATE-----
 
+ ```
+Let's promote docker1:
+```
+$ docker node promote docker1
+```
 Now let's take the manager1 node, the leader, out of the Swarm
 ```
-$ docker-machine ssh manager1 "docker swarm leave --force"
-Node left the swarm.
+It's also easy to remove a service:
 ```
-
-Wait about 30 seconds just to be sure. The Swarm still functions, but must elect a new leader. This happens automatically.
-```
-$ docker-machine ssh manager2 "docker node ls"
-ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
-3cq6idpysa53n6a21nqe0924h    manager3  Ready   Active        Reachable
-64swze471iu5silg83ls0bdip    manager1  Down    Active        Unreachable
-7eljvvg0icxlw20od5f51oq8t *  manager2  Ready   Active        Leader
-8awcmkj3sd9nv1pi77i6mdb1i    worker1   Ready   Active        
-avu80ol573rzepx8ov80ygzxz    worker2   Ready   Active        
-bxn1iivy8w7faeugpep76w50j    worker3   Ready   Active
-```
-You see that `manager1` is Down and Unreachable and `manager2` has been elected leader. It's also easy to remove a service:
-```
-$ docker-machine ssh manager2 "docker service rm web"
+$ docker service rm web
 web
 ```
-
-## Cleanup
-There's also a [bash script](https://github.com/ManoMarks/labs/blob/master/swarm-mode/beginner-tutorial/swarm-node-vbox-teardown.sh) that will clean up your machine by removing all the Docker Machines.
-
-```
-$ ./swarm-node-vbox-teardown.sh
-Stopping "manager3"...
-Stopping "manager2"...
-Stopping "worker1"...
-Stopping "manager1"...
-Stopping "worker3"...
-Stopping "worker2"...
-Machine "manager3" was stopped.
-Machine "manager1" was stopped.
-Machine "manager2" was stopped.
-Machine "worker2" was stopped.
-Machine "worker1" was stopped.
-Machine "worker3" was stopped.
-About to remove worker1, worker2, worker3, manager1, manager2, manager3
-Are you sure? (y/n): y
-Successfully removed worker1
-Successfully removed worker2
-Successfully removed worker3
-Successfully removed manager1
-Successfully removed manager2
-Successfully removed manager3
-```  
-
 ## Next steps
 Check out the documentation on [Docker Swarm Mode](https://docs.docker.com/engine/swarm/) for more information.
