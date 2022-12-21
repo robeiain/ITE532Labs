@@ -16,10 +16,11 @@ This requires clear network communication, so ensure no firewall is active betwe
 `docker swarm join --token SWMTKN-1-0i7ecku40oxilhuf7em8mvx5bzb02y2iczt4pg4pk974dlfmqu-95eujgsp1c1qs6fme753xqa9r 10.0.0.20:2377`
 3. From the first machine, run `docker node ls` and it will show you status of your cluster:
 
-`root@docker2:~# docker node ls
+```
+root@docker2:~# docker node ls
 ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
 89hm11snya6gducfwadhoqn2h     docker1    Ready     Active                          20.10.21
-uhz3opjuii09xl8ern9ip7d5p *   docker2    Ready     Active         Leader           20.10.21`
+uhz3opjuii09xl8ern9ip7d5p *   docker2    Ready     Active         Leader           20.10.21
 ```
 
 That last line will show you a list of all the nodes, something like this:
