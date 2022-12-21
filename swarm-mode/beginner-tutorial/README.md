@@ -1,107 +1,25 @@
 # Docker Swarm Tutorial
-> **Note:** This tutorial uses Docker Machine to simulate multiple machines on your desktop. There's an easier way to learn swarm mode, and that is using [Play with Docker](http://training.play-with-docker.com/swarm-mode-intro/). This tutorial is preserved for legacy reasons, and also in case you really want to learn to do this on your own machine.
 
-Docker includes swarm mode for natively managing a cluster of Docker Engines called a swarm. You can use the Docker CLI to create a swarm, deploy application services to a swarm, and manage swarm behavior. This tutorial uses [Docker Machine](https://docs.docker.com/machine/) to create multiple nodes on your desktop. If you prefer you can create those nodes in your own cloud or on multiple machines.
-
-> **Important Note**
-You don't need to use the Docker CLI to perform these operations. You can use `docker stack deploy --compose-file STACKNAME.yml STACKNAME` instead. For an introduction to using a stack file in a compose file format to deploy an app, check out [Deploying an app to a Swarm](https://github.com/docker/labs/blob/master/beginner/chapters/votingapp.md).
 
 ## Preparation
-You need to have Docker and Docker Machine installed on your system. [Download Docker](https://docker.com/getdocker) for your platform and install it.
+You need to have two machines/VMs on the same network running Docker.
 
-> **Tips:**
->
-* If you are using Docker for Mac or Docker for Windows, you already have Docker Machine, as it is installed with those applications. See [Download Docker for Mac](https://docs.docker.com/docker-for-mac/#/download-docker-for-mac) and [Download Docker for Windows](https://docs.docker.com/docker-for-windows/#/download-docker-for-windows) for install options and details on what gets installed.
->
-* If you are using Docker for Windows you will need to use the Hyper-V driver for Docker Machine. That will require a bit more set-up. See the [Microsoft Hyper-V driver documentation](https://docs.docker.com/machine/drivers/hyper-v/) for directions on setting it up.
->
-* If you are using Docker directly on a Linux system, you will need to [install Docker Machine](https://docs.docker.com/machine/install-machine/) (after installing [Docker Engine](https://docs.docker.com/engine/installation/linux/)).
+This requires clear network communication, so ensure no firewall is active between your hosts and run the following commands on each.
+1. `ufw disable`
+2. `iptables -F`
+3. `iptables -X`
 
 ## Creating the nodes and Swarm
-[Docker Machine](https://docs.docker.com/machine/overview/) can be used to:
-* Install and run Docker on Mac or Windows
-* Provision and manage multiple remote Docker hosts
-* Provision Swarm clusters
+1. Run `docker swarm init --listen-addr 10.0.0.20 --advertise-addr 10.0.0.20` where the ip address is the address of the machine you are running from.
+2. This will provide you with a command you can copy to use on the other machine which will look like the following:
 
-But it can also be used to create multiple nodes on your local machine. There's a [bash script](https://github.com/docker/labs/blob/master/swarm-mode/beginner-tutorial/swarm-node-vbox-setup.sh) in this repository that does just that and creates a swarm. There's also [a powershell Hyper-V version](https://github.com/docker/labs/blob/master/swarm-mode/beginner-tutorial/swarm-node-hyperv-setup.ps1). On this page we're walking through the bash script, but the steps, aside from set-up, are a basically the same for the Hyper-V version.
+`docker swarm join --token SWMTKN-1-0i7ecku40oxilhuf7em8mvx5bzb02y2iczt4pg4pk974dlfmqu-95eujgsp1c1qs6fme753xqa9r 10.0.0.20:2377`
+3. From the first machine, run `docker node ls` and it will show you status of your cluster:
 
-This first step creates three machines, and names the machines manager1, manager2, and manager3
-```
-#!/bin/bash
-
-# Swarm mode using Docker Machine
-
-#This configures the number of workers and managers in the swarm
-managers=3
-workers=3
-
-# This creates the manager machines
-echo "======> Creating $managers manager machines ...";
-for node in $(seq 1 $managers);
-do
-	echo "======> Creating manager$node machine ...";
-	docker-machine create -d virtualbox manager$node;
-done
-```
-
-This second step creates three more machines, and names them worker1, worker2, and worker3
-```
-# This create worker machines
-echo "======> Creating $workers worker machines ...";
-for node in $(seq 1 $workers);
-do
-	echo "======> Creating worker$node machine ...";
-	docker-machine create -d virtualbox worker$node;
-done
-
-# This lists all machines created
-docker-machine ls
-```
-
-Next you create a swarm by initializing it on the first manager. You do this by using `docker-machine ssh` to run `docker swarm init`
-```
-# initialize swarm mode and create a manager
-echo "======> Initializing first swarm manager ..."
-docker-machine ssh manager1 "docker swarm init --listen-addr $(docker-machine ip manager1) --advertise-addr $(docker-machine ip manager1)"
-```
-Next you get join tokens for managers and workers.
-
-```
-# get manager and worker tokens
-export manager_token=`docker-machine ssh manager1 "docker swarm join-token manager -q"`
-export worker_token=`docker-machine ssh manager1 "docker swarm join-token worker -q"`
-```
-
-Then join the other masters to the Swarm
-```
-for node in $(seq 2 $managers);
-do
-	echo "======> manager$node joining swarm as manager ..."
-	docker-machine ssh manager$node \
-		"docker swarm join \
-		--token $manager_token \
-		--listen-addr $(docker-machine ip manager$node) \
-		--advertise-addr $(docker-machine ip manager$node) \
-		$(docker-machine ip manager1)"
-done
-```
-
-Finally, add the worker machines and join them to the swarm.
-```
-# workers join swarm
-for node in $(seq 1 $workers);
-do
-	echo "======> worker$node joining swarm as worker ..."
-	docker-machine ssh worker$node \
-	"docker swarm join \
-	--token $worker_token \
-	--listen-addr $(docker-machine ip worker$node) \
-	--advertise-addr $(docker-machine ip worker$node) \
-	$(docker-machine ip manager1):2377"
-done
-
-# show members of swarm
-docker-machine ssh manager1 "docker node ls"
+`root@docker2:~# docker node ls
+ID                            HOSTNAME   STATUS    AVAILABILITY   MANAGER STATUS   ENGINE VERSION
+89hm11snya6gducfwadhoqn2h     docker1    Ready     Active                          20.10.21
+uhz3opjuii09xl8ern9ip7d5p *   docker2    Ready     Active         Leader           20.10.21`
 ```
 
 That last line will show you a list of all the nodes, something like this:
