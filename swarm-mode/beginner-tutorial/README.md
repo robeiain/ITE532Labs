@@ -245,7 +245,7 @@ Let's promote docker1:
 $ docker node promote docker1
 ```
 Now let's take the manager1 node, the leader, out of the Swarm
-```
+
 It's also easy to remove a service:
 ```
 $ docker service rm web
