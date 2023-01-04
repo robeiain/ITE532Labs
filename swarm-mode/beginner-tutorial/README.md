@@ -38,7 +38,7 @@ You can actually load any of the node ip addresses and get the same result becau
 
 Next let's inspect the service
 ```
-$ docker-machine ssh manager1 "docker service inspect web"
+$ docker service inspect web
 [
     {
         "ID": "2x4jsk6313azr6g1dwoi47z8u",
