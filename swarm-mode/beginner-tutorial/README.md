@@ -5,9 +5,10 @@
 You need to have two machines/VMs on the same network running Docker.
 
 This requires clear network communication, so ensure no firewall is active between your hosts and run the following commands on each.
-1. `ufw disable`
-2. `iptables -F`
-3. `iptables -X`
+```
+ufw disable
+```
+
 
 ## Creating the nodes and Swarm
 1. Run `docker swarm init --listen-addr 10.0.0.20 --advertise-addr 10.0.0.20` where the ip address is the address of the machine you are running from.
