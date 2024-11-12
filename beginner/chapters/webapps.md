@@ -180,16 +180,10 @@ $ mkdir floppy-bird
 $ cd floppy-bird
 ```
 
-If you don't already have it installed, you will need to a tool to download the github repository files to the folder - on Ubuntu we can install the following:
+Now you can download the website files - they will come down into a folder called "floppybird":
 
 ```bash
-$ sudo apt install -yyq subversion
-```
-
-Now you can download the website files - they will come down into a folder called "trunk":
-
-```bash
-$ svn export https://github.com/robeiain/floppybird/trunk
+$ git clone https://github.com/robeiain/floppybird
 ```
 
 ### 2.3.2 Write a Dockerfile
