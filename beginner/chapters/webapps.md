@@ -210,7 +210,7 @@ A [Dockerfile](https://docs.docker.com/engine/reference/builder/) is a text file
 3. Let's add the files that make up the Javascript Application.
 
   ```
-  COPY trunk/ /usr/share/nginx/html/
+  COPY floppybird/ /usr/share/nginx/html/
   ```
 
 4. Specify the port number which needs to be exposed. Since our flask app is running as a web server on `80` that's what we'll expose.
